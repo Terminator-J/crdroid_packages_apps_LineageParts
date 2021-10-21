@@ -24,12 +24,16 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.ArraySet;
 import android.util.Log;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 
+import androidx.core.content.ContextCompat;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceScreen;
 import androidx.preference.SwitchPreference;
+import androidx.viewpager.widget.ViewPager;
 
 import com.android.internal.util.ArrayUtils;
 
@@ -39,6 +43,7 @@ import org.lineageos.lineageparts.search.BaseSearchIndexProvider;
 import org.lineageos.lineageparts.search.SearchIndexableRaw;
 import org.lineageos.lineageparts.search.Searchable;
 import org.lineageos.lineageparts.utils.ResourceUtils;
+import org.lineageos.lineageparts.widget.ViewPagerAdapter;
 
 import java.util.Collections;
 import java.util.List;
@@ -126,6 +131,11 @@ public class LiveDisplaySettings extends SettingsPreferenceFragment implements S
 
     private LineageHardwareManager mHardware;
 
+    private ViewPager viewPager;
+    private LinearLayout sliderDotspanel;
+    private int dotscount;
+    private ImageView[] dots;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -136,6 +146,8 @@ public class LiveDisplaySettings extends SettingsPreferenceFragment implements S
         mHardware = LineageHardwareManager.getInstance(getActivity());
         mLiveDisplayManager = LiveDisplayManager.getInstance(getActivity());
         mConfig = mLiveDisplayManager.getConfig();
+
+        setupImageSlider();
 
         addPreferencesFromResource(R.xml.livedisplay);
 
@@ -264,6 +276,48 @@ public class LiveDisplaySettings extends SettingsPreferenceFragment implements S
             liveDisplayPrefs.removePreference(mAntiFlicker);
             mAntiFlicker = null;
         }
+    }
+
+    private void setupImageSlider() {
+        viewPager = (ViewPager) findViewById(R.id.preview);
+        sliderDotspanel = (LinearLayout) findViewById(R.id.SliderDots);
+
+        ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(getApplicationContext());
+        viewPager.setAdapter(viewPagerAdapter);
+
+        dotscount = viewPagerAdapter.getCount();
+        dots = new ImageView[dotscount];
+
+        for(int i = 0; i < dotscount; i++) {
+            dots[i] = new ImageView(getApplicationContext());
+            dots[i].setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.inactive_dot));
+
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            params.setMargins(8, 0, 8, 0);
+            sliderDotspanel.addView(dots[i], params);
+        }
+
+        dots[0].setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.active_dot));
+
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+
+                for(int i = 0; i< dotscount; i++){
+                    dots[i].setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.inactive_dot));
+                }
+                dots[position].setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.active_dot));
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+            }
+        });
     }
 
     @Override
